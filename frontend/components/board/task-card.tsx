@@ -90,6 +90,7 @@ export function SortableTaskCard({ columnId, onOpen, task }: SortableTaskCardPro
     opacity: isDragging ? 0.32 : 1,
     zIndex: isDragging ? 10 : undefined,
   };
+  const { onKeyDown: sortableKeyDown, ...pointerListeners } = listeners ?? {};
 
   return (
     <motion.div
@@ -98,16 +99,21 @@ export function SortableTaskCard({ columnId, onOpen, task }: SortableTaskCardPro
       layout={!isDragging && !reduceMotion}
       whileHover={isDragging || reduceMotion ? undefined : { y: -2 }}
       transition={{ type: "spring", stiffness: 460, damping: 34 }}
+      {...attributes}
+      {...pointerListeners}
       role="button"
       tabIndex={0}
-      aria-label={`${task.title}. Drag to move or press Enter to open.`}
+      aria-label={`${task.title}. Press Space to move or Enter to open.`}
       onClick={() => onOpen(task)}
       onKeyDown={(event) => {
-        if (event.key === "Enter") onOpen(task);
+        if (event.key === "Enter") {
+          event.preventDefault();
+          onOpen(task);
+          return;
+        }
+        sortableKeyDown?.(event);
       }}
       className="cursor-grab rounded-[28px] outline-none active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
-      {...attributes}
-      {...listeners}
     >
       <TaskCard task={task} />
     </motion.div>

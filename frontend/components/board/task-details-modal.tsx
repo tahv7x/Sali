@@ -22,11 +22,8 @@ export function TaskDetailsModal({ onClose, status, task }: TaskDetailsModalProp
   const reduceMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const [subtasks, setSubtasks] = useState<Subtask[]>(task?.subtasks ?? []);
-
-  useEffect(() => {
-    setSubtasks(task?.subtasks ?? []);
-  }, [task]);
+  const [subtasksByTask, setSubtasksByTask] = useState<Record<string, Subtask[]>>({});
+  const subtasks = task ? (subtasksByTask[task.id] ?? task.subtasks) : [];
 
   useEffect(() => {
     if (!task) return;
@@ -49,11 +46,14 @@ export function TaskDetailsModal({ onClose, status, task }: TaskDetailsModalProp
   }, [onClose, task]);
 
   const toggleSubtask = (index: number) => {
-    setSubtasks((current) =>
-      current.map((subtask, subtaskIndex) =>
+    if (!task) return;
+
+    setSubtasksByTask((current) => ({
+      ...current,
+      [task.id]: (current[task.id] ?? task.subtasks).map((subtask, subtaskIndex) =>
         subtaskIndex === index ? { ...subtask, done: !subtask.done } : subtask,
       ),
-    );
+    }));
   };
 
   return (
