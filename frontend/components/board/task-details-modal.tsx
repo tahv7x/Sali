@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CalendarDays, Check, Tag, UserRound, X } from "lucide-react";
-import type { Priority, Subtask, Task } from "./mock-data";
+import { Archive, CalendarDays, Check, Copy, Pencil, Tag, Trash2, UserRound, X } from "lucide-react";
+import type { Priority, Task } from "./mock-data";
 import { AvatarStack } from "./task-card";
 
 const priorityStyles: Record<Priority, string> = {
@@ -13,20 +13,33 @@ const priorityStyles: Record<Priority, string> = {
 };
 
 type TaskDetailsModalProps = {
+  onArchive: (task: Task) => void;
   onClose: () => void;
+  onDelete: (task: Task) => void;
+  onDuplicate: (task: Task) => void;
+  onEdit: (task: Task) => void;
+  onUpdateTask: (task: Task) => void;
   status: string;
   task: Task | null;
 };
 
-export function TaskDetailsModal({ onClose, status, task }: TaskDetailsModalProps) {
+export function TaskDetailsModal({
+  onArchive,
+  onClose,
+  onDelete,
+  onDuplicate,
+  onEdit,
+  onUpdateTask,
+  status,
+  task,
+}: TaskDetailsModalProps) {
   const reduceMotion = useReducedMotion();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const [subtasksByTask, setSubtasksByTask] = useState<Record<string, Subtask[]>>({});
-  const subtasks = task ? (subtasksByTask[task.id] ?? task.subtasks) : [];
+  const taskId = task?.id;
 
   useEffect(() => {
-    if (!task) return;
+    if (!taskId) return;
 
     previousFocusRef.current = document.activeElement as HTMLElement;
     const previousOverflow = document.body.style.overflow;
@@ -43,17 +56,17 @@ export function TaskDetailsModal({ onClose, status, task }: TaskDetailsModalProp
       document.body.style.overflow = previousOverflow;
       previousFocusRef.current?.focus();
     };
-  }, [onClose, task]);
+  }, [onClose, taskId]);
 
   const toggleSubtask = (index: number) => {
     if (!task) return;
 
-    setSubtasksByTask((current) => ({
-      ...current,
-      [task.id]: (current[task.id] ?? task.subtasks).map((subtask, subtaskIndex) =>
+    onUpdateTask({
+      ...task,
+      subtasks: task.subtasks.map((subtask, subtaskIndex) =>
         subtaskIndex === index ? { ...subtask, done: !subtask.done } : subtask,
       ),
-    }));
+    });
   };
 
   return (
@@ -125,11 +138,11 @@ export function TaskDetailsModal({ onClose, status, task }: TaskDetailsModalProp
                       Subtasks
                     </h3>
                     <span className="font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
-                      {subtasks.filter((subtask) => subtask.done).length}/{subtasks.length}
+                      {task.subtasks.filter((subtask) => subtask.done).length}/{task.subtasks.length}
                     </span>
                   </div>
                   <div className="mt-12 divide-y divide-hairline-silver border-y border-hairline-silver">
-                    {subtasks.map((subtask, index) => (
+                    {task.subtasks.map((subtask, index) => (
                       <button
                         key={subtask.title}
                         type="button"
@@ -169,10 +182,20 @@ export function TaskDetailsModal({ onClose, status, task }: TaskDetailsModalProp
               </aside>
             </div>
 
-            <div className="mt-32 border-t border-hairline-silver pt-20">
-              <p className="font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
-                Updated recently · Changes in this preview stay on this device only.
-              </p>
+            <div className="mt-32 flex flex-wrap items-center justify-between gap-16 border-t border-hairline-silver pt-20">
+              <div className="flex flex-wrap items-center gap-8">
+                <ActionButton icon={Trash2} label="Delete" onClick={() => onDelete(task)} destructive />
+                <ActionButton icon={Archive} label="Archive" onClick={() => onArchive(task)} />
+                <ActionButton icon={Copy} label="Duplicate" onClick={() => onDuplicate(task)} />
+              </div>
+              <button
+                type="button"
+                onClick={() => onEdit(task)}
+                className="inline-flex min-h-[32px] items-center gap-8 rounded-[9999px] border border-pricing-blue bg-pricing-blue px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-gallery-white outline-none transition-colors hover:border-apple-blue hover:bg-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+              >
+                <Pencil aria-hidden="true" size={13} strokeWidth={1.8} />
+                Edit task
+              </button>
             </div>
           </motion.section>
         </motion.div>
@@ -202,5 +225,28 @@ function DetailRow({
         {children}
       </div>
     </div>
+  );
+}
+
+function ActionButton({
+  destructive = false,
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  destructive?: boolean;
+  icon: typeof CalendarDays;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex min-h-[32px] items-center gap-8 rounded-[9999px] px-12 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control outline-none transition-colors hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue ${destructive ? "text-launch-orange" : "text-ink"}`}
+    >
+      <Icon aria-hidden="true" size={13} strokeWidth={1.8} />
+      {label}
+    </button>
   );
 }

@@ -120,6 +120,8 @@
 
 html {
   background: var(--color-studio-mist);
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -139,4 +141,10 @@ a {
 
 ::selection {
   background: color-mix(in srgb, var(--color-apple-blue) 18%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }

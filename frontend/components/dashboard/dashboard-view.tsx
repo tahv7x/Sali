@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Clock3, Plus, Users } from "lucide-react";
 import { PricingBlueButton, SearchInput } from "@/components/ui";
+import { NewBoardModal } from "./new-board-modal";
 
-const boards = [
+const initialBoards = [
   {
     id: "product-launch",
     title: "Product launch",
@@ -46,12 +47,35 @@ const boards = [
 ];
 
 export function DashboardView() {
+  const [boards, setBoards] = useState(initialBoards);
   const [query, setQuery] = useState("");
+  const [showNewBoard, setShowNewBoard] = useState(false);
   const reduceMotion = useReducedMotion();
   const filteredBoards = useMemo(
     () => boards.filter((board) => `${board.title} ${board.description}`.toLowerCase().includes(query.toLowerCase())),
-    [query],
+    [boards, query],
   );
+
+  const createBoard = ({ description, title }: { description: string; title: string }) => {
+    const baseId = slugify(title) || "untitled-board";
+    const id = boards.some((board) => board.id === baseId)
+      ? `${baseId}-${Date.now()}`
+      : baseId;
+
+    setBoards((current) => [
+      {
+        id,
+        title,
+        description,
+        progress: 0,
+        tasks: 0,
+        members: 1,
+        updated: "Just now",
+      },
+      ...current,
+    ]);
+    setShowNewBoard(false);
+  };
 
   return (
     <section className="mx-auto min-h-[calc(100vh-44px)] max-w-[1200px] px-20 py-64 max-md:px-16 max-md:py-48">
@@ -67,7 +91,7 @@ export function DashboardView() {
             Pick up where you left off, or make room for something new.
           </p>
         </div>
-        <PricingBlueButton aria-label="Create a new board">
+        <PricingBlueButton aria-label="Create a new board" onClick={() => setShowNewBoard(true)}>
           <Plus aria-hidden="true" size={14} strokeWidth={2} />
           New board
         </PricingBlueButton>
@@ -149,6 +173,24 @@ export function DashboardView() {
           </p>
         </div>
       ) : null}
+
+      <AnimatePresence>
+        {showNewBoard ? (
+          <NewBoardModal
+            key="new-board"
+            onClose={() => setShowNewBoard(false)}
+            onCreate={createBoard}
+          />
+        ) : null}
+      </AnimatePresence>
     </section>
   );
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

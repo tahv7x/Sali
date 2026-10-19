@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AppExperience } from "@/components/app-experience";
 import { GlobalNavigation } from "@/components/global-navigation";
 import "./globals.css";
 
@@ -15,8 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <GlobalNavigation />
-        <main className="min-h-[calc(100vh-44px)] bg-studio-mist">{children}</main>
+        <AppExperience navigation={<GlobalNavigation />}>
+          {children}
+        </AppExperience>
       </body>
     </html>
   );

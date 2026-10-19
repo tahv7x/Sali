@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   closestCenter,
   DndContext,
@@ -21,22 +21,51 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { MoreHorizontal, Plus, Share2, SlidersHorizontal } from "lucide-react";
 import { ExplorePill, LaunchLabel, PricingBlueButton } from "@/components/ui";
 import { boardColumns, initialTasks, type BoardColumn, type Task } from "./mock-data";
 import { SortableTaskCard, TaskCard } from "./task-card";
 import { TaskDetailsModal } from "./task-details-modal";
+import { TaskEditorModal } from "./task-editor-modal";
+import { UndoToast, type UndoNotice } from "./undo-toast";
 
 type TaskMap = Record<string, Task[]>;
+
+type EditorState = {
+  columnId: string;
+  key: number;
+  mode: "create" | "edit";
+  task?: Task;
+};
+
+type UndoState = {
+  notice: UndoNotice;
+  snapshot: TaskMap;
+};
 
 export function TaskBoard({ boardTitle }: { boardTitle: string }) {
   const [tasks, setTasks] = useState<TaskMap>(() => cloneTaskMap(initialTasks));
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [editor, setEditor] = useState<EditorState | null>(null);
+  const [undoState, setUndoState] = useState<UndoState | null>(null);
   const dragSnapshotRef = useRef<TaskMap | null>(null);
   const justDraggedRef = useRef(false);
   const reduceMotion = useReducedMotion();
+
+  const showUndo = useCallback((message: string, snapshot: TaskMap) => {
+    setUndoState({
+      notice: { id: Date.now(), message },
+      snapshot,
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!undoState) return;
+    const timeout = window.setTimeout(() => setUndoState(null), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [undoState]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -96,6 +125,7 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    const snapshot = dragSnapshotRef.current;
     if (over) {
       setTasks((current) => {
         const activeContainer = findContainer(current, active.id);
@@ -113,6 +143,7 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
 
         return { ...current, [activeContainer]: arrayMove(items, activeIndex, overIndex) };
       });
+      if (snapshot) showUndo("Task moved", snapshot);
     }
 
     dragSnapshotRef.current = null;
@@ -136,6 +167,89 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
   }, []);
 
   const handleCloseTask = useCallback(() => setSelectedTask(null), []);
+
+  const openCreateTask = useCallback((columnId = "to-do") => {
+    setEditor({ mode: "create", columnId, key: Date.now() });
+  }, []);
+
+  const openEditTask = useCallback((task: Task) => {
+    const columnId = findContainerForTask(tasks, task.id) ?? "to-do";
+    setSelectedTask(null);
+    setEditor({ mode: "edit", columnId, task, key: Date.now() });
+  }, [tasks]);
+
+  const handleEditorSubmit = (nextTask: Task, columnId: string) => {
+    const snapshot = cloneTaskMap(tasks);
+    const isEditing = editor?.mode === "edit";
+
+    setTasks((current) => {
+      const withoutTask = Object.fromEntries(
+        Object.entries(current).map(([id, items]) => [
+          id,
+          items.filter((item) => item.id !== nextTask.id),
+        ]),
+      ) as TaskMap;
+
+      return {
+        ...withoutTask,
+        [columnId]: [...(withoutTask[columnId] ?? []), nextTask],
+      };
+    });
+    setEditor(null);
+    setSelectedTask(nextTask);
+    showUndo(isEditing ? "Task updated" : "Task created", snapshot);
+  };
+
+  const handleUpdateTask = useCallback((nextTask: Task) => {
+    setTasks((current) =>
+      Object.fromEntries(
+        Object.entries(current).map(([columnId, items]) => [
+          columnId,
+          items.map((item) => (item.id === nextTask.id ? nextTask : item)),
+        ]),
+      ),
+    );
+    setSelectedTask(nextTask);
+  }, []);
+
+  const handleDuplicateTask = (task: Task) => {
+    const snapshot = cloneTaskMap(tasks);
+    const columnId = findContainerForTask(tasks, task.id) ?? "to-do";
+    const duplicate: Task = {
+      ...task,
+      id: `${task.id}-copy-${Date.now()}`,
+      title: `${task.title} copy`,
+      subtasks: task.subtasks.map((subtask) => ({ ...subtask })),
+    };
+
+    setTasks((current) => ({
+      ...current,
+      [columnId]: [...current[columnId], duplicate],
+    }));
+    setSelectedTask(duplicate);
+    showUndo("Task duplicated", snapshot);
+  };
+
+  const removeTask = (task: Task, action: "archived" | "deleted") => {
+    const snapshot = cloneTaskMap(tasks);
+    setTasks((current) =>
+      Object.fromEntries(
+        Object.entries(current).map(([columnId, items]) => [
+          columnId,
+          items.filter((item) => item.id !== task.id),
+        ]),
+      ),
+    );
+    setSelectedTask(null);
+    showUndo(`Task ${action}`, snapshot);
+  };
+
+  const handleUndo = () => {
+    if (!undoState) return;
+    setTasks(cloneTaskMap(undoState.snapshot));
+    setSelectedTask(null);
+    setUndoState(null);
+  };
 
   return (
     <section className="min-h-[calc(100vh-44px)] bg-studio-mist pb-28">
@@ -169,7 +283,7 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
               <Share2 aria-hidden="true" size={14} strokeWidth={1.8} />
               Share
             </ExplorePill>
-            <PricingBlueButton>
+            <PricingBlueButton onClick={() => openCreateTask()}>
               <Plus aria-hidden="true" size={14} strokeWidth={2} />
               Add task
             </PricingBlueButton>
@@ -213,6 +327,7 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
               <BoardColumnView
                 key={column.id}
                 column={column}
+                onAddTask={openCreateTask}
                 onOpenTask={handleOpenTask}
                 tasks={tasks[column.id] ?? []}
               />
@@ -237,6 +352,31 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
         task={selectedTask}
         status={selectedStatus}
         onClose={handleCloseTask}
+        onEdit={openEditTask}
+        onDuplicate={handleDuplicateTask}
+        onArchive={(task) => removeTask(task, "archived")}
+        onDelete={(task) => removeTask(task, "deleted")}
+        onUpdateTask={handleUpdateTask}
+      />
+
+      <AnimatePresence>
+        {editor ? (
+          <TaskEditorModal
+            key={editor.key}
+            mode={editor.mode}
+            task={editor.task}
+            columns={boardColumns}
+            initialColumnId={editor.columnId}
+            onClose={() => setEditor(null)}
+            onSubmit={handleEditorSubmit}
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <UndoToast
+        notice={undoState?.notice ?? null}
+        onUndo={handleUndo}
+        onDismiss={() => setUndoState(null)}
       />
     </section>
   );
@@ -244,10 +384,12 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
 
 function BoardColumnView({
   column,
+  onAddTask,
   onOpenTask,
   tasks,
 }: {
   column: BoardColumn;
+  onAddTask: (columnId: string) => void;
   onOpenTask: (task: Task) => void;
   tasks: Task[];
 }) {
@@ -277,6 +419,7 @@ function BoardColumnView({
         <button
           type="button"
           aria-label={`Add task to ${column.title}`}
+          onClick={() => onAddTask(column.id)}
           className="grid size-28 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-gallery-white hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
         >
           <Plus aria-hidden="true" size={15} strokeWidth={1.8} />
@@ -321,6 +464,12 @@ function findTask(containers: TaskMap, taskId: string) {
     if (task) return task;
   }
   return null;
+}
+
+function findContainerForTask(containers: TaskMap, taskId: string) {
+  return Object.keys(containers).find((columnId) =>
+    containers[columnId].some((task) => task.id === taskId),
+  );
 }
 
 function cloneTaskMap(source: TaskMap): TaskMap {
