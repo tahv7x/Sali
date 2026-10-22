@@ -3,8 +3,12 @@
 import { useEffect, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Archive, CalendarDays, Check, Copy, Pencil, Tag, Trash2, UserRound, X } from "lucide-react";
+import { useMediaQuery } from "@/components/ui/use-media-query";
 import type { Priority, Task } from "./mock-data";
 import { AvatarStack } from "./task-card";
+
+const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
+const drawerEase: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
 const priorityStyles: Record<Priority, string> = {
   High: "bg-launch-orange",
@@ -34,6 +38,7 @@ export function TaskDetailsModal({
   task,
 }: TaskDetailsModalProps) {
   const reduceMotion = useReducedMotion();
+  const isMobile = useMediaQuery("(max-width: 767px)");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const taskId = task?.id;
@@ -69,15 +74,60 @@ export function TaskDetailsModal({
     });
   };
 
+  const panelInitial = reduceMotion
+    ? { opacity: 0, transform: "none" }
+    : isMobile
+      ? { opacity: 1, transform: "translateY(100%) scale(1) rotate(0deg)" }
+      : { opacity: 0, transform: "translateY(16px) scale(0.97)" };
+  const panelAnimate = reduceMotion
+    ? {
+        opacity: 1,
+        transform: "none",
+        transition: { duration: 0.16, ease: easeOut },
+      }
+    : isMobile
+      ? {
+          opacity: 1,
+          transform: "translateY(0%) scale(1) rotate(0deg)",
+          transition: { duration: 0.32, ease: drawerEase },
+        }
+      : {
+          opacity: 1,
+          transform: "translateY(0px) scale(1)",
+          transition: { duration: 0.28, ease: easeOut },
+        };
+  const panelExit = reduceMotion
+    ? {
+        opacity: 0,
+        transform: "none",
+        transition: { duration: 0.12, ease: easeOut },
+      }
+    : isMobile
+      ? {
+          opacity: 1,
+          transform: "translateY(100%) scale(1) rotate(0deg)",
+          transition: { duration: 0.24, ease: drawerEase },
+        }
+      : {
+          opacity: 0,
+          transform: "translateY(12px) scale(0.985)",
+          transition: { duration: 0.2, ease: easeOut },
+        };
+
   return (
     <AnimatePresence>
       {task ? (
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center bg-paper-frost/85 p-20 backdrop-blur-[20px] max-md:items-end max-md:p-0"
-          initial={reduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={reduceMotion ? undefined : { opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0 }}
+          animate={{
+            opacity: 1,
+            transition: { duration: reduceMotion ? 0.16 : 0.2, ease: easeOut },
+          }}
+          exit={{
+            opacity: 0,
+            transition: { duration: reduceMotion ? 0.12 : 0.16, ease: easeOut },
+          }}
           onMouseDown={(event) => {
             if (event.currentTarget === event.target) onClose();
           }}
@@ -86,10 +136,10 @@ export function TaskDetailsModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="task-details-title"
-            initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduceMotion ? undefined : { opacity: 0, y: 16, scale: 0.99 }}
-            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            initial={panelInitial}
+            animate={panelAnimate}
+            exit={panelExit}
+            style={{ transformOrigin: isMobile ? "bottom center" : "center center" }}
             className="max-h-[88vh] w-full max-w-[760px] overflow-y-auto rounded-[28px] border border-hairline-silver bg-gallery-white p-28 max-md:max-h-[92vh] max-md:rounded-b-none max-md:border-b-0"
           >
             <div className="flex items-start justify-between gap-20">

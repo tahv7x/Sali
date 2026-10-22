@@ -25,6 +25,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { MoreHorizontal, Plus, Share2, SlidersHorizontal } from "lucide-react";
 import { ExplorePill, LaunchLabel, PricingBlueButton } from "@/components/ui";
 import { boardColumns, initialTasks, type BoardColumn, type Task } from "./mock-data";
+import { BoardFilters } from "./board-filters";
 import { SortableTaskCard, TaskCard } from "./task-card";
 import { TaskDetailsModal } from "./task-details-modal";
 import { TaskEditorModal } from "./task-editor-modal";
@@ -50,9 +51,74 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editor, setEditor] = useState<EditorState | null>(null);
   const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [filterQuery, setFilterQuery] = useState("");
+  const [priorityFilters, setPriorityFilters] = useState<Task["priority"][]>([]);
+  const [assigneeFilters, setAssigneeFilters] = useState<string[]>([]);
   const dragSnapshotRef = useRef<TaskMap | null>(null);
   const justDraggedRef = useRef(false);
+  const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const reduceMotion = useReducedMotion();
+
+  const totalTaskCount = useMemo(
+    () => Object.values(tasks).reduce((total, items) => total + items.length, 0),
+    [tasks],
+  );
+
+  const assignees = useMemo(() => {
+    const people = new Map<string, Task["assignees"][number]>();
+    Object.values(tasks).flat().forEach((task) => {
+      task.assignees.forEach((assignee) => people.set(assignee.name, assignee));
+    });
+    return [...people.values()].sort((first, second) =>
+      first.name.localeCompare(second.name),
+    );
+  }, [tasks]);
+
+  const hasActiveFilters =
+    filterQuery.trim().length > 0 ||
+    priorityFilters.length > 0 ||
+    assigneeFilters.length > 0;
+
+  const activeFilterCount =
+    (filterQuery.trim() ? 1 : 0) + priorityFilters.length + assigneeFilters.length;
+
+  const visibleTasks = useMemo(() => {
+    const normalizedQuery = filterQuery.trim().toLowerCase();
+
+    return Object.fromEntries(
+      Object.entries(tasks).map(([columnId, items]) => [
+        columnId,
+        items.filter((task) => {
+          const searchableText = [
+            task.title,
+            task.description,
+            task.dueDate,
+            task.priority,
+            ...task.tags,
+            ...task.assignees.flatMap((assignee) => [assignee.name, assignee.initials]),
+          ]
+            .join(" ")
+            .toLowerCase();
+
+          const matchesQuery =
+            normalizedQuery.length === 0 || searchableText.includes(normalizedQuery);
+          const matchesPriority =
+            priorityFilters.length === 0 || priorityFilters.includes(task.priority);
+          const matchesAssignee =
+            assigneeFilters.length === 0 ||
+            task.assignees.some((assignee) => assigneeFilters.includes(assignee.name));
+
+          return matchesQuery && matchesPriority && matchesAssignee;
+        }),
+      ]),
+    ) as TaskMap;
+  }, [assigneeFilters, filterQuery, priorityFilters, tasks]);
+
+  const visibleTaskCount = useMemo(
+    () => Object.values(visibleTasks).reduce((total, items) => total + items.length, 0),
+    [visibleTasks],
+  );
 
   const showUndo = useCallback((message: string, snapshot: TaskMap) => {
     setUndoState({
@@ -66,6 +132,26 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
     const timeout = window.setTimeout(() => setUndoState(null), 6000);
     return () => window.clearTimeout(timeout);
   }, [undoState]);
+
+  useEffect(() => {
+    if (!isFiltersOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!filterMenuRef.current?.contains(event.target as Node)) {
+        setIsFiltersOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsFiltersOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFiltersOpen]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -251,6 +337,28 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
     setUndoState(null);
   };
 
+  const togglePriorityFilter = (priority: Task["priority"]) => {
+    setPriorityFilters((current) =>
+      current.includes(priority)
+        ? current.filter((item) => item !== priority)
+        : [...current, priority],
+    );
+  };
+
+  const toggleAssigneeFilter = (name: string) => {
+    setAssigneeFilters((current) =>
+      current.includes(name)
+        ? current.filter((item) => item !== name)
+        : [...current, name],
+    );
+  };
+
+  const clearFilters = () => {
+    setFilterQuery("");
+    setPriorityFilters([]);
+    setAssigneeFilters([]);
+  };
+
   return (
     <section className="min-h-[calc(100vh-44px)] bg-studio-mist pb-28">
       <div className="sticky top-0 z-30 px-20 pt-20 max-md:px-12 max-md:pt-12">
@@ -275,10 +383,40 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-8">
-            <ExplorePill>
-              <SlidersHorizontal aria-hidden="true" size={14} strokeWidth={1.8} />
-              Filter
-            </ExplorePill>
+            <div ref={filterMenuRef} className="relative">
+              <ExplorePill
+                aria-expanded={isFiltersOpen}
+                aria-haspopup="dialog"
+                onClick={() => setIsFiltersOpen((current) => !current)}
+                className={hasActiveFilters ? "border-apple-blue bg-paper-frost text-apple-blue" : ""}
+              >
+                <SlidersHorizontal aria-hidden="true" size={14} strokeWidth={1.8} />
+                Filter
+                {activeFilterCount > 0 ? (
+                  <span className="grid size-16 place-items-center rounded-full bg-ink font-sf-pro-text text-[9px] font-semibold text-gallery-white">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </ExplorePill>
+
+              <AnimatePresence>
+                {isFiltersOpen ? (
+                  <BoardFilters
+                    assignees={assignees}
+                    query={filterQuery}
+                    selectedPriorities={priorityFilters}
+                    selectedAssignees={assigneeFilters}
+                    resultCount={visibleTaskCount}
+                    totalCount={totalTaskCount}
+                    onQueryChange={setFilterQuery}
+                    onTogglePriority={togglePriorityFilter}
+                    onToggleAssignee={toggleAssigneeFilter}
+                    onClear={clearFilters}
+                    onClose={() => setIsFiltersOpen(false)}
+                  />
+                ) : null}
+              </AnimatePresence>
+            </div>
             <ExplorePill>
               <Share2 aria-hidden="true" size={14} strokeWidth={1.8} />
               Share
@@ -308,9 +446,16 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
               Keep the launch moving.
             </h2>
           </div>
-          <p className="hidden font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate md:block">
-            Drag a card to update its status · Select a card for details
-          </p>
+          <div className="hidden text-right md:block">
+            {hasActiveFilters ? (
+              <p className="font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-apple-blue">
+                {visibleTaskCount} matching {visibleTaskCount === 1 ? "task" : "tasks"}
+              </p>
+            ) : null}
+            <p className="font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
+              Drag a card to update its status · Select a card for details
+            </p>
+          </div>
         </div>
 
         <DndContext
@@ -327,9 +472,10 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
               <BoardColumnView
                 key={column.id}
                 column={column}
+                isFiltered={hasActiveFilters}
                 onAddTask={openCreateTask}
                 onOpenTask={handleOpenTask}
-                tasks={tasks[column.id] ?? []}
+                tasks={visibleTasks[column.id] ?? []}
               />
             ))}
           </div>
@@ -337,8 +483,37 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
           <DragOverlay dropAnimation={reduceMotion ? null : undefined}>
             {activeTask ? (
               <motion.div
-                initial={reduceMotion ? false : { scale: 0.98, rotate: 0 }}
-                animate={{ scale: 1.02, rotate: 0.6 }}
+                initial={
+                  reduceMotion
+                    ? {
+                        opacity: 0,
+                        transform:
+                          "translate3d(0, 0, 0) scale(1) rotate(0deg)",
+                      }
+                    : {
+                        opacity: 1,
+                        transform:
+                          "translate3d(0, 0, 0) scale(0.98) rotate(0deg)",
+                      }
+                }
+                animate={
+                  reduceMotion
+                    ? {
+                        opacity: 1,
+                        transform:
+                          "translate3d(0, 0, 0) scale(1) rotate(0deg)",
+                      }
+                    : {
+                        opacity: 1,
+                        transform:
+                          "translate3d(0, 0, 0) scale(1.02) rotate(0.6deg)",
+                      }
+                }
+                transition={
+                  reduceMotion
+                    ? { duration: 0.12, ease: [0.23, 1, 0.32, 1] }
+                    : { type: "spring", duration: 0.5, bounce: 0.2 }
+                }
                 className="w-[300px] cursor-grabbing"
               >
                 <TaskCard task={activeTask} overlay />
@@ -384,11 +559,13 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
 
 function BoardColumnView({
   column,
+  isFiltered,
   onAddTask,
   onOpenTask,
   tasks,
 }: {
   column: BoardColumn;
+  isFiltered: boolean;
   onAddTask: (columnId: string) => void;
   onOpenTask: (task: Task) => void;
   tasks: Task[];
@@ -439,7 +616,7 @@ function BoardColumnView({
           {tasks.length === 0 ? (
             <div className="grid min-h-[120px] place-items-center rounded-[20px] border border-dashed border-hairline-silver px-20 text-center">
               <p className="font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
-                Drop a task here
+                {isFiltered ? "No matching tasks" : "Drop a task here"}
               </p>
             </div>
           ) : null}

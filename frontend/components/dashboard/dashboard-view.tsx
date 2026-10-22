@@ -110,55 +110,97 @@ export function DashboardView() {
         {filteredBoards.map((board, index) => (
           <motion.div
             key={board.id}
-            initial={reduceMotion ? undefined : { opacity: 0, y: 14 }}
-            animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: index * 0.06 }}
-            whileHover={reduceMotion ? undefined : { y: -3 }}
+            initial={
+              reduceMotion
+                ? { opacity: 0 }
+                : { opacity: 0, transform: "translateY(14px)" }
+            }
+            animate={
+              reduceMotion
+                ? {
+                    opacity: 1,
+                    transition: {
+                      duration: 0.12,
+                      ease: [0.23, 1, 0.32, 1],
+                    },
+                  }
+                : {
+                    opacity: 1,
+                    transform: "translateY(0px)",
+                    transition: {
+                      duration: 0.22,
+                      delay: index * 0.05,
+                      ease: [0.23, 1, 0.32, 1],
+                    },
+                  }
+            }
           >
-            <Link
-              href={`/boards/${board.id}`}
-              className="group flex min-h-[270px] flex-col rounded-[28px] bg-gallery-white p-28 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-apple-blue"
+            <motion.div
+              animate={
+                reduceMotion
+                  ? undefined
+                  : { transform: "translateY(0px)" }
+              }
+              whileHover={
+                reduceMotion
+                  ? undefined
+                  : { transform: "translateY(-2px)" }
+              }
+              transition={
+                reduceMotion
+                  ? undefined
+                  : {
+                      duration: 0.14,
+                      delay: 0,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }
+              }
             >
-              <div className="flex items-start justify-between gap-20">
-                <div>
-                  <h2 className="font-sf-pro-display text-[28px] font-semibold leading-[1.14] tracking-[-0.015em] text-ink">
-                    {board.title}
-                  </h2>
-                  <p className="mt-12 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-slate">
-                    {board.description}
-                  </p>
-                </div>
-                <ArrowUpRight
-                  aria-hidden="true"
-                  size={20}
-                  strokeWidth={1.6}
-                  className="shrink-0 text-slate transition-colors group-hover:text-ink"
-                />
-              </div>
-
-              <div className="mt-auto pt-40">
-                <div className="flex items-center justify-between font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
-                  <span>{board.progress}% complete</span>
-                  <span>{board.tasks} tasks</span>
-                </div>
-                <div className="mt-8 h-4 overflow-hidden rounded-full bg-control-gray">
-                  <div
-                    className="h-full rounded-full bg-ink"
-                    style={{ width: `${board.progress}%` }}
+              <Link
+                href={`/boards/${board.id}`}
+                className="group flex min-h-[270px] flex-col rounded-[28px] bg-gallery-white p-28 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-apple-blue"
+              >
+                <div className="flex items-start justify-between gap-20">
+                  <div>
+                    <h2 className="font-sf-pro-display text-[28px] font-semibold leading-[1.14] tracking-[-0.015em] text-ink">
+                      {board.title}
+                    </h2>
+                    <p className="mt-12 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-slate">
+                      {board.description}
+                    </p>
+                  </div>
+                  <ArrowUpRight
+                    aria-hidden="true"
+                    size={20}
+                    strokeWidth={1.6}
+                    className="shrink-0 text-slate transition-colors group-hover:text-ink"
                   />
                 </div>
-                <div className="mt-20 flex items-center gap-20 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
-                  <span className="inline-flex items-center gap-4">
-                    <Users aria-hidden="true" size={13} strokeWidth={1.7} />
-                    {board.members}
-                  </span>
-                  <span className="inline-flex items-center gap-4">
-                    <Clock3 aria-hidden="true" size={13} strokeWidth={1.7} />
-                    {board.updated}
-                  </span>
+
+                <div className="mt-auto pt-40">
+                  <div className="flex items-center justify-between font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
+                    <span>{board.progress}% complete</span>
+                    <span>{board.tasks} tasks</span>
+                  </div>
+                  <div className="mt-8 h-4 overflow-hidden rounded-full bg-control-gray">
+                    <div
+                      className="h-full rounded-full bg-ink"
+                      style={{ width: `${board.progress}%` }}
+                    />
+                  </div>
+                  <div className="mt-20 flex items-center gap-20 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
+                    <span className="inline-flex items-center gap-4">
+                      <Users aria-hidden="true" size={13} strokeWidth={1.7} />
+                      {board.members}
+                    </span>
+                    <span className="inline-flex items-center gap-4">
+                      <Clock3 aria-hidden="true" size={13} strokeWidth={1.7} />
+                      {board.updated}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            </motion.div>
           </motion.div>
         ))}
       </div>

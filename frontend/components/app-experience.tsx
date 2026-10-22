@@ -135,22 +135,11 @@ export function AppExperience({ children, navigation }: AppExperienceProps) {
         key={`page-${pathname}`}
         aria-hidden={isOpening}
         className="min-h-[calc(100vh-44px)] bg-studio-mist"
-        style={{
-          willChange: "opacity, filter",
-        }}
-        initial={
-          isOpening || reduceMotion
-            ? { opacity: 0 }
-            : { opacity: 0, filter: "blur(4px)" }
-        }
-        animate={
-          isOpening
-            ? { opacity: 0 }
-            : { opacity: 1, filter: "blur(0px)" }
-        }
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isOpening ? 0 : 1 }}
         transition={{
-          duration: reduceMotion ? 0.12 : 0.52,
-          ease: [0.16, 1, 0.3, 1],
+          duration: reduceMotion ? 0.12 : 0.2,
+          ease: [0.23, 1, 0.32, 1],
         }}
       >
         {children}

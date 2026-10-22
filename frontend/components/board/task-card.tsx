@@ -86,19 +86,16 @@ export function SortableTaskCard({ columnId, onOpen, task }: SortableTaskCardPro
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: reduceMotion ? undefined : transition,
     opacity: isDragging ? 0.32 : 1,
     zIndex: isDragging ? 10 : undefined,
   };
   const { onKeyDown: sortableKeyDown, ...pointerListeners } = listeners ?? {};
 
   return (
-    <motion.div
+    <div
       ref={setNodeRef}
       style={style}
-      layout={!isDragging && !reduceMotion}
-      whileHover={isDragging || reduceMotion ? undefined : { y: -2 }}
-      transition={{ type: "spring", stiffness: 460, damping: 34 }}
       {...attributes}
       {...pointerListeners}
       role="button"
@@ -115,8 +112,23 @@ export function SortableTaskCard({ columnId, onOpen, task }: SortableTaskCardPro
       }}
       className="cursor-grab rounded-[28px] outline-none active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
     >
-      <TaskCard task={task} />
-    </motion.div>
+      <motion.div
+        whileHover={
+          isDragging || reduceMotion
+            ? undefined
+            : {
+                transform: "translateY(-2px)",
+                transition: {
+                  duration: 0.14,
+                  ease: [0.23, 1, 0.32, 1],
+                },
+              }
+        }
+        transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
+      >
+        <TaskCard task={task} />
+      </motion.div>
+    </div>
   );
 }
 
