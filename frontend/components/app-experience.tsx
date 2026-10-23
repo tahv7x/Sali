@@ -88,12 +88,19 @@ export function AppExperience({ children, navigation }: AppExperienceProps) {
   const [isOpening, setIsOpening] = useState(true);
 
   useEffect(() => {
+    const hasSeenOpening = window.sessionStorage.getItem("sali.opening-seen") === "1";
+    if (hasSeenOpening) {
+      const skipTimer = window.setTimeout(() => setIsOpening(false), 0);
+      return () => window.clearTimeout(skipTimer);
+    }
+
+    window.sessionStorage.setItem("sali.opening-seen", "1");
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     const timer = window.setTimeout(
       () => setIsOpening(false),
-      reduceMotion ? 300 : 1350,
+      reduceMotion ? 180 : 950,
     );
 
     return () => {

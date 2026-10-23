@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Archive, CalendarDays, Check, Copy, Pencil, Tag, Trash2, UserRound, X } from "lucide-react";
+import { CalendarDays, Check, Copy, Pencil, Tag, Trash2, UserRound, X } from "lucide-react";
 import { useMediaQuery } from "@/components/ui/use-media-query";
+import { useDialogFocus } from "@/components/ui";
 import type { Priority, Task } from "./mock-data";
 import { AvatarStack } from "./task-card";
 
@@ -17,7 +18,6 @@ const priorityStyles: Record<Priority, string> = {
 };
 
 type TaskDetailsModalProps = {
-  onArchive: (task: Task) => void;
   onClose: () => void;
   onDelete: (task: Task) => void;
   onDuplicate: (task: Task) => void;
@@ -28,7 +28,6 @@ type TaskDetailsModalProps = {
 };
 
 export function TaskDetailsModal({
-  onArchive,
   onClose,
   onDelete,
   onDuplicate,
@@ -40,28 +39,12 @@ export function TaskDetailsModal({
   const reduceMotion = useReducedMotion();
   const isMobile = useMediaQuery("(max-width: 767px)");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
   const taskId = task?.id;
-
-  useEffect(() => {
-    if (!taskId) return;
-
-    previousFocusRef.current = document.activeElement as HTMLElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeButtonRef.current?.focus();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      previousFocusRef.current?.focus();
-    };
-  }, [onClose, taskId]);
+  const dialogRef = useDialogFocus<HTMLElement>({
+    active: Boolean(taskId),
+    initialFocusRef: closeButtonRef,
+    onClose,
+  });
 
   const toggleSubtask = (index: number) => {
     if (!task) return;
@@ -133,6 +116,8 @@ export function TaskDetailsModal({
           }}
         >
           <motion.section
+            ref={dialogRef}
+            tabIndex={-1}
             role="dialog"
             aria-modal="true"
             aria-labelledby="task-details-title"
@@ -165,7 +150,7 @@ export function TaskDetailsModal({
                 type="button"
                 aria-label="Close task details"
                 onClick={onClose}
-                className="grid size-32 shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none transition-colors hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+                className="grid size-44 shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none transition-colors hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
               >
                 <X aria-hidden="true" size={16} strokeWidth={1.8} />
               </button>
@@ -235,13 +220,12 @@ export function TaskDetailsModal({
             <div className="mt-32 flex flex-wrap items-center justify-between gap-16 border-t border-hairline-silver pt-20">
               <div className="flex flex-wrap items-center gap-8">
                 <ActionButton icon={Trash2} label="Delete" onClick={() => onDelete(task)} destructive />
-                <ActionButton icon={Archive} label="Archive" onClick={() => onArchive(task)} />
                 <ActionButton icon={Copy} label="Duplicate" onClick={() => onDuplicate(task)} />
               </div>
               <button
                 type="button"
                 onClick={() => onEdit(task)}
-                className="inline-flex min-h-[32px] items-center gap-8 rounded-[9999px] border border-pricing-blue bg-pricing-blue px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-gallery-white outline-none transition-colors hover:border-apple-blue hover:bg-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+                className="inline-flex min-h-[44px] items-center gap-8 rounded-[9999px] border border-pricing-blue bg-pricing-blue px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-gallery-white outline-none transition-colors hover:border-apple-blue hover:bg-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
               >
                 <Pencil aria-hidden="true" size={13} strokeWidth={1.8} />
                 Edit task
@@ -293,7 +277,7 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex min-h-[32px] items-center gap-8 rounded-[9999px] px-12 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control outline-none transition-colors hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue ${destructive ? "text-launch-orange" : "text-ink"}`}
+      className={`inline-flex min-h-[44px] items-center gap-8 rounded-[9999px] px-12 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control outline-none transition-colors hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue ${destructive ? "text-launch-orange" : "text-ink"}`}
     >
       <Icon aria-hidden="true" size={13} strokeWidth={1.8} />
       {label}

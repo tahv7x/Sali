@@ -1,60 +1,45 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Clock3, Plus, Users } from "lucide-react";
 import { PricingBlueButton, SearchInput } from "@/components/ui";
+import {
+  boardStoreEvent,
+  createStoredBoard,
+  getStoredBoards,
+  initialBoards,
+  type BoardSummary,
+} from "@/lib/board-store";
 import { NewBoardModal } from "./new-board-modal";
 
-const initialBoards = [
-  {
-    id: "product-launch",
-    title: "Product launch",
-    description: "Positioning, creative, and go-to-market milestones.",
-    progress: 72,
-    tasks: 18,
-    members: 4,
-    updated: "12 min ago",
-  },
-  {
-    id: "brand-refresh",
-    title: "Brand refresh",
-    description: "A clear home for identity decisions and rollout work.",
-    progress: 48,
-    tasks: 14,
-    members: 3,
-    updated: "Yesterday",
-  },
-  {
-    id: "mobile-app",
-    title: "Mobile app",
-    description: "Interaction details for the next Sali mobile release.",
-    progress: 86,
-    tasks: 22,
-    members: 5,
-    updated: "2 days ago",
-  },
-  {
-    id: "research-sprint",
-    title: "Research sprint",
-    description: "Customer interviews, patterns, and opportunity areas.",
-    progress: 35,
-    tasks: 11,
-    members: 2,
-    updated: "4 days ago",
-  },
-];
-
 export function DashboardView() {
-  const [boards, setBoards] = useState(initialBoards);
+  const [boards, setBoards] = useState<BoardSummary[]>(initialBoards);
   const [query, setQuery] = useState("");
   const [showNewBoard, setShowNewBoard] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
   const reduceMotion = useReducedMotion();
   const filteredBoards = useMemo(
     () => boards.filter((board) => `${board.title} ${board.description}`.toLowerCase().includes(query.toLowerCase())),
     [boards, query],
   );
+
+  useEffect(() => {
+    const syncBoards = () => setBoards(getStoredBoards());
+    syncBoards();
+    window.addEventListener(boardStoreEvent, syncBoards);
+    window.addEventListener("storage", syncBoards);
+
+    if (window.location.hash === "#board-search") {
+      window.setTimeout(() => searchRef.current?.focus(), 0);
+    }
+
+    return () => {
+      window.removeEventListener(boardStoreEvent, syncBoards);
+      window.removeEventListener("storage", syncBoards);
+    };
+  }, []);
 
   const createBoard = ({ description, title }: { description: string; title: string }) => {
     const baseId = slugify(title) || "untitled-board";
@@ -62,18 +47,16 @@ export function DashboardView() {
       ? `${baseId}-${Date.now()}`
       : baseId;
 
-    setBoards((current) => [
-      {
-        id,
-        title,
-        description,
-        progress: 0,
-        tasks: 0,
-        members: 1,
-        updated: "Just now",
-      },
-      ...current,
-    ]);
+    createStoredBoard({
+      id,
+      title,
+      description,
+      progress: 0,
+      tasks: 0,
+      members: 1,
+      updated: "Just now",
+    });
+    setBoards(getStoredBoards());
     setShowNewBoard(false);
   };
 
@@ -99,6 +82,8 @@ export function DashboardView() {
 
       <div className="mt-40 max-w-[420px]">
         <SearchInput
+          ref={searchRef}
+          id="board-search"
           label="Search boards"
           placeholder="Search by name or description"
           value={query}

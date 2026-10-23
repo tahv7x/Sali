@@ -63,7 +63,7 @@ export function BoardFilters({
           type="button"
           aria-label="Close filters"
           onClick={onClose}
-          className="grid size-28 shrink-0 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-paper-frost hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+          className="grid size-44 shrink-0 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-paper-frost hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
         >
           <X aria-hidden="true" size={15} strokeWidth={1.8} />
         </button>
@@ -119,7 +119,7 @@ export function BoardFilters({
                 type="button"
                 aria-pressed={selected}
                 onClick={() => onToggleAssignee(assignee.name)}
-                className={`flex min-h-[40px] items-center gap-8 rounded-[20px] border px-12 py-8 text-left outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue ${selected ? "border-ink bg-ink text-gallery-white" : "border-hairline-silver bg-gallery-white text-ink hover:bg-paper-frost"}`}
+                className={`flex min-h-[44px] items-center gap-8 rounded-[20px] border px-12 py-8 text-left outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue ${selected ? "border-ink bg-ink text-gallery-white" : "border-hairline-silver bg-gallery-white text-ink hover:bg-paper-frost"}`}
               >
                 <span
                   className={`grid size-24 shrink-0 place-items-center rounded-full font-sf-pro-text text-[9px] font-semibold ${selected ? "bg-gallery-white text-ink" : "bg-control-gray text-ink"}`}
@@ -141,14 +141,14 @@ export function BoardFilters({
           type="button"
           disabled={!hasFilters}
           onClick={onClear}
-          className="rounded-lg font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-apple-blue outline-none transition-opacity hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-apple-blue disabled:cursor-default disabled:text-steel disabled:opacity-50"
+          className="min-h-[44px] rounded-lg px-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-apple-blue outline-none transition-opacity hover:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-apple-blue disabled:cursor-default disabled:text-steel disabled:opacity-50"
         >
           Clear all
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="min-h-[32px] rounded-[9999px] border border-pricing-blue bg-pricing-blue px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-gallery-white outline-none transition-colors hover:border-apple-blue hover:bg-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+          className="min-h-[44px] rounded-[9999px] border border-pricing-blue bg-pricing-blue px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-gallery-white outline-none transition-colors hover:border-apple-blue hover:bg-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
         >
           Done
         </button>
@@ -171,7 +171,7 @@ function FilterChip({
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`inline-flex min-h-[32px] items-center gap-8 rounded-[9999px] border px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue ${selected ? "border-ink bg-ink text-gallery-white" : "border-steel bg-gallery-white text-ink hover:bg-paper-frost"}`}
+      className={`inline-flex min-h-[44px] items-center gap-8 rounded-[9999px] border px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue ${selected ? "border-ink bg-ink text-gallery-white" : "border-steel bg-gallery-white text-ink hover:bg-paper-frost"}`}
     >
       {selected ? <Check aria-hidden="true" size={12} strokeWidth={2} /> : null}
       {label}

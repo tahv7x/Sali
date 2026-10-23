@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
-import { PricingBlueButton, RoundedInput } from "@/components/ui";
+import { PricingBlueButton, RoundedInput, useDialogFocus } from "@/components/ui";
 import { useMediaQuery } from "@/components/ui/use-media-query";
 import type { BoardColumn, Priority, Task } from "./mock-data";
 
@@ -30,6 +30,7 @@ export function TaskEditorModal({
   const reduceMotion = useReducedMotion();
   const isMobile = useMediaQuery("(max-width: 767px)");
   const titleRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useDialogFocus<HTMLElement>({ initialFocusRef: titleRef, onClose });
   const [title, setTitle] = useState(task?.title ?? "");
   const [description, setDescription] = useState(task?.description ?? "");
   const [priority, setPriority] = useState<Priority>(task?.priority ?? "Medium");
@@ -38,24 +39,11 @@ export function TaskEditorModal({
   const [assignees, setAssignees] = useState(
     task?.assignees.map((assignee) => assignee.name).join(", ") ?? "",
   );
+  const [subtasks, setSubtasks] = useState(
+    task?.subtasks.map((subtask) => subtask.title).join("\n") ?? "",
+  );
   const [columnId, setColumnId] = useState(initialColumnId);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    titleRef.current?.focus();
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -81,7 +69,14 @@ export function TaskEditorModal({
         assignees: parsedAssignees.length
           ? parsedAssignees
           : [{ name: "You", initials: "YO" }],
-        subtasks: task?.subtasks ?? [],
+        subtasks: subtasks
+          .split("\n")
+          .map((title) => title.trim())
+          .filter(Boolean)
+          .map((title) => ({
+            title,
+            done: task?.subtasks.find((subtask) => subtask.title === title)?.done ?? false,
+          })),
       },
       columnId,
     );
@@ -144,6 +139,8 @@ export function TaskEditorModal({
       }}
     >
       <motion.section
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-editor-title"
@@ -169,7 +166,7 @@ export function TaskEditorModal({
             type="button"
             onClick={onClose}
             aria-label="Close task editor"
-            className="grid size-32 shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+            className="grid size-44 shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
           >
             <X aria-hidden="true" size={16} strokeWidth={1.8} />
           </button>
@@ -185,6 +182,7 @@ export function TaskEditorModal({
               if (error) setError("");
             }}
             placeholder="What needs to happen?"
+            maxLength={120}
             error={error || undefined}
           />
 
@@ -195,6 +193,7 @@ export function TaskEditorModal({
               onChange={(event) => setDescription(event.target.value)}
               placeholder="Add the context your team needs"
               rows={4}
+              maxLength={2000}
               className="mt-8 w-full resize-none rounded-[20px] border border-steel bg-gallery-white px-20 py-16 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink outline-none placeholder:text-slate focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
             />
           </label>
@@ -213,19 +212,34 @@ export function TaskEditorModal({
           </div>
 
           <div className="mt-20 grid grid-cols-2 gap-20 max-sm:grid-cols-1">
-            <RoundedInput label="Due date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} placeholder="Today, Oct 31…" />
-            <RoundedInput label="Tags" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="Design, Launch" hint="Separate tags with commas." />
+            <RoundedInput label="Due date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} placeholder="Today, Oct 31…" maxLength={40} />
+            <RoundedInput label="Tags" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="Design, Launch" hint="Separate tags with commas." maxLength={250} />
           </div>
 
           <div className="mt-20">
-            <RoundedInput label="Assignees" value={assignees} onChange={(event) => setAssignees(event.target.value)} placeholder="Alex Morgan, Sam Kim" hint="Separate names with commas." />
+            <RoundedInput label="Assignees" value={assignees} onChange={(event) => setAssignees(event.target.value)} placeholder="Alex Morgan, Sam Kim" hint="Separate names with commas." maxLength={250} />
           </div>
+
+          <label className="mt-20 block font-sf-pro-text text-compact-control font-medium leading-compact-control tracking-compact-control text-ink">
+            Subtasks
+            <textarea
+              value={subtasks}
+              onChange={(event) => setSubtasks(event.target.value)}
+              placeholder={"Draft the outline\nRequest review\nPublish the final version"}
+              rows={4}
+              maxLength={1200}
+              className="mt-8 w-full resize-y rounded-[20px] border border-steel bg-gallery-white px-20 py-16 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink outline-none placeholder:text-slate focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+            />
+            <span className="mt-8 block font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
+              Add one subtask per line.
+            </span>
+          </label>
 
           <div className="mt-32 flex items-center justify-end gap-12 border-t border-hairline-silver pt-20">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-[9999px] px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-ink outline-none hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+              className="min-h-[44px] rounded-[9999px] px-16 py-8 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-ink outline-none hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
             >
               Cancel
             </button>

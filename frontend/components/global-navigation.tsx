@@ -4,7 +4,6 @@ import { CheckCircle2, Search } from "lucide-react";
 const navigationItems = [
   { label: "Home", href: "/" },
   { label: "Boards", href: "/boards" },
-  { label: "Components", href: "/ui-kit" },
 ];
 
 export function GlobalNavigation() {
@@ -38,9 +37,9 @@ export function GlobalNavigation() {
         </div>
 
         <Link
-          href="/boards"
+          href="/boards#board-search"
           aria-label="Search boards"
-          className="grid size-28 place-items-center rounded-full text-ink transition-colors duration-200 hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+          className="grid size-44 place-items-center rounded-full text-ink transition-colors duration-200 hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
         >
           <Search aria-hidden="true" size={16} strokeWidth={1.8} />
         </Link>

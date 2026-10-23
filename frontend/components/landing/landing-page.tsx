@@ -67,7 +67,7 @@ export function LandingPage() {
               <motion.div whileHover={reduceMotion ? undefined : { y: -1 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }}>
                 <Link
                   href="/boards"
-                  className="inline-flex min-h-[36px] items-center gap-8 rounded-[9999px] border border-pricing-blue bg-pricing-blue px-20 py-8 font-sf-pro-text text-compact-control font-normal leading-compact-control tracking-compact-control text-gallery-white outline-none transition-colors hover:border-apple-blue hover:bg-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+                  className="inline-flex min-h-[44px] items-center gap-8 rounded-[9999px] border border-pricing-blue bg-pricing-blue px-20 py-8 font-sf-pro-text text-compact-control font-normal leading-compact-control tracking-compact-control text-gallery-white outline-none transition-colors hover:border-apple-blue hover:bg-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
                 >
                   Open workspace
                   <ArrowRight aria-hidden="true" size={14} strokeWidth={2} />
@@ -76,7 +76,7 @@ export function LandingPage() {
               <motion.div whileHover={reduceMotion ? undefined : { y: -1 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }}>
                 <Link
                   href="/boards/product-launch"
-                  className="inline-flex min-h-[36px] items-center rounded-[9999px] border border-steel bg-transparent px-20 py-8 font-sf-pro-text text-compact-control font-normal leading-compact-control tracking-compact-control text-ink outline-none transition-colors hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+                  className="inline-flex min-h-[44px] items-center rounded-[9999px] border border-steel bg-transparent px-20 py-8 font-sf-pro-text text-compact-control font-normal leading-compact-control tracking-compact-control text-ink outline-none transition-colors hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
                 >
                   View sample board
                 </Link>

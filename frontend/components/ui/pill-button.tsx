@@ -33,7 +33,7 @@ export function PillButton({
       whileHover={disabled || reduceMotion ? undefined : { y: -1 }}
       whileTap={disabled || reduceMotion ? undefined : { scale: 0.98 }}
       transition={{ type: "spring", stiffness: 500, damping: 32, mass: 0.5 }}
-      className={`inline-flex min-h-[32px] items-center justify-center gap-8 rounded-[9999px] px-16 py-8 font-sf-pro-text text-compact-control font-normal leading-compact-control tracking-compact-control outline-none transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue disabled:cursor-not-allowed ${variantStyles[variant]} ${className}`}
+      className={`inline-flex min-h-[44px] items-center justify-center gap-8 rounded-[9999px] px-16 py-8 font-sf-pro-text text-compact-control font-normal leading-compact-control tracking-compact-control outline-none transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue disabled:cursor-not-allowed ${variantStyles[variant]} ${className}`}
       {...props}
     />
   );

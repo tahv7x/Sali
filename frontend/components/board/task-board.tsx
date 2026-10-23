@@ -7,6 +7,7 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useDroppable,
   useSensor,
   useSensors,
@@ -22,7 +23,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { MoreHorizontal, Plus, Share2, SlidersHorizontal } from "lucide-react";
+import { Check, Plus, Share2, SlidersHorizontal } from "lucide-react";
 import { ExplorePill, LaunchLabel, PricingBlueButton } from "@/components/ui";
 import { boardColumns, initialTasks, type BoardColumn, type Task } from "./mock-data";
 import { BoardFilters } from "./board-filters";
@@ -30,8 +31,14 @@ import { SortableTaskCard, TaskCard } from "./task-card";
 import { TaskDetailsModal } from "./task-details-modal";
 import { TaskEditorModal } from "./task-editor-modal";
 import { UndoToast, type UndoNotice } from "./undo-toast";
-
-type TaskMap = Record<string, Task[]>;
+import {
+  cloneTaskMap,
+  emptyTaskMap,
+  ensureStoredBoard,
+  getStoredTasks,
+  saveStoredTasks,
+  type TaskMap,
+} from "@/lib/board-store";
 
 type EditorState = {
   columnId: string;
@@ -45,8 +52,11 @@ type UndoState = {
   snapshot: TaskMap;
 };
 
-export function TaskBoard({ boardTitle }: { boardTitle: string }) {
-  const [tasks, setTasks] = useState<TaskMap>(() => cloneTaskMap(initialTasks));
+export function TaskBoard({ boardId, boardTitle }: { boardId: string; boardTitle: string }) {
+  const [tasks, setTasks] = useState<TaskMap>(() =>
+    boardId === "product-launch" ? cloneTaskMap(initialTasks) : emptyTaskMap(),
+  );
+  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [editor, setEditor] = useState<EditorState | null>(null);
@@ -55,10 +65,28 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
   const [filterQuery, setFilterQuery] = useState("");
   const [priorityFilters, setPriorityFilters] = useState<Task["priority"][]>([]);
   const [assigneeFilters, setAssigneeFilters] = useState<string[]>([]);
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied">("idle");
   const dragSnapshotRef = useRef<TaskMap | null>(null);
   const justDraggedRef = useRef(false);
+  const loadedBoardIdRef = useRef<string | null>(null);
   const filterMenuRef = useRef<HTMLDivElement | null>(null);
   const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    ensureStoredBoard(boardId, boardTitle);
+    const loadTimer = window.setTimeout(() => {
+      const storedTasks = getStoredTasks(boardId);
+      loadedBoardIdRef.current = boardId;
+      setTasks(storedTasks);
+      setHasLoadedStorage(true);
+    }, 0);
+    return () => window.clearTimeout(loadTimer);
+  }, [boardId, boardTitle]);
+
+  useEffect(() => {
+    if (!hasLoadedStorage || loadedBoardIdRef.current !== boardId) return;
+    saveStoredTasks(boardId, tasks);
+  }, [boardId, hasLoadedStorage, tasks]);
 
   const totalTaskCount = useMemo(
     () => Object.values(tasks).reduce((total, items) => total + items.length, 0),
@@ -155,8 +183,30 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `${boardTitle} — Sali`,
+      text: `Open the ${boardTitle} board in Sali.`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        return;
+      }
+      await navigator.clipboard.writeText(shareData.url);
+      setShareStatus("copied");
+      window.setTimeout(() => setShareStatus("idle"), 1800);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareStatus("idle");
+    }
+  };
 
   const activeTask = useMemo(
     () => (activeId ? findTask(tasks, activeId) : null),
@@ -316,7 +366,7 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
     showUndo("Task duplicated", snapshot);
   };
 
-  const removeTask = (task: Task, action: "archived" | "deleted") => {
+  const removeTask = (task: Task) => {
     const snapshot = cloneTaskMap(tasks);
     setTasks((current) =>
       Object.fromEntries(
@@ -327,7 +377,7 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
       ),
     );
     setSelectedTask(null);
-    showUndo(`Task ${action}`, snapshot);
+    showUndo("Task deleted", snapshot);
   };
 
   const handleUndo = () => {
@@ -417,21 +467,18 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
                 ) : null}
               </AnimatePresence>
             </div>
-            <ExplorePill>
-              <Share2 aria-hidden="true" size={14} strokeWidth={1.8} />
-              Share
+            <ExplorePill onClick={handleShare} aria-live="polite">
+              {shareStatus === "copied" ? (
+                <Check aria-hidden="true" size={14} strokeWidth={1.8} />
+              ) : (
+                <Share2 aria-hidden="true" size={14} strokeWidth={1.8} />
+              )}
+              {shareStatus === "copied" ? "Link copied" : "Share"}
             </ExplorePill>
             <PricingBlueButton onClick={() => openCreateTask()}>
               <Plus aria-hidden="true" size={14} strokeWidth={2} />
               Add task
             </PricingBlueButton>
-            <button
-              type="button"
-              aria-label="More board options"
-              className="grid size-32 place-items-center rounded-full text-ink outline-none transition-colors hover:bg-paper-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
-            >
-              <MoreHorizontal aria-hidden="true" size={17} strokeWidth={1.8} />
-            </button>
           </div>
         </div>
       </div>
@@ -467,7 +514,7 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
           onDragEnd={handleDragEnd}
           onDragCancel={handleDragCancel}
         >
-          <div className="flex min-h-[620px] gap-16 overflow-x-auto pb-20">
+          <div className="flex min-h-[620px] touch-pan-x gap-16 overflow-x-auto pb-20">
             {boardColumns.map((column) => (
               <BoardColumnView
                 key={column.id}
@@ -529,8 +576,7 @@ export function TaskBoard({ boardTitle }: { boardTitle: string }) {
         onClose={handleCloseTask}
         onEdit={openEditTask}
         onDuplicate={handleDuplicateTask}
-        onArchive={(task) => removeTask(task, "archived")}
-        onDelete={(task) => removeTask(task, "deleted")}
+        onDelete={removeTask}
         onUpdateTask={handleUpdateTask}
       />
 
@@ -597,7 +643,7 @@ function BoardColumnView({
           type="button"
           aria-label={`Add task to ${column.title}`}
           onClick={() => onAddTask(column.id)}
-          className="grid size-28 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-gallery-white hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+          className="grid size-44 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-gallery-white hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
         >
           <Plus aria-hidden="true" size={15} strokeWidth={1.8} />
         </button>
@@ -646,11 +692,5 @@ function findTask(containers: TaskMap, taskId: string) {
 function findContainerForTask(containers: TaskMap, taskId: string) {
   return Object.keys(containers).find((columnId) =>
     containers[columnId].some((task) => task.id === taskId),
-  );
-}
-
-function cloneTaskMap(source: TaskMap): TaskMap {
-  return Object.fromEntries(
-    Object.entries(source).map(([columnId, tasks]) => [columnId, [...tasks]]),
   );
 }

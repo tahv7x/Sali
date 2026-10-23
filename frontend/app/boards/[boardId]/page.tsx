@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: BoardPageProps): Promise<Meta
 
 export default async function BoardPage({ params }: BoardPageProps) {
   const { boardId } = await params;
-  return <TaskBoard boardTitle={formatBoardTitle(boardId)} />;
+  return <TaskBoard boardId={boardId} boardTitle={formatBoardTitle(boardId)} />;
 }
 
 function formatBoardTitle(value: string) {

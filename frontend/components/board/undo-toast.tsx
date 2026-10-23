@@ -36,7 +36,7 @@ export function UndoToast({
           <button
             type="button"
             onClick={onUndo}
-            className="rounded-lg font-sf-pro-text text-body-small font-medium leading-body-small tracking-body-small text-apple-blue outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-apple-blue"
+            className="min-h-[44px] rounded-lg px-8 font-sf-pro-text text-body-small font-medium leading-body-small tracking-body-small text-apple-blue outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-apple-blue"
           >
             Undo
           </button>
@@ -44,7 +44,7 @@ export function UndoToast({
             type="button"
             onClick={onDismiss}
             aria-label="Dismiss notification"
-            className="grid size-24 place-items-center rounded-full text-slate outline-none hover:bg-paper-frost hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+            className="grid size-44 place-items-center rounded-full text-slate outline-none hover:bg-paper-frost hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
           >
             <X aria-hidden="true" size={13} strokeWidth={1.8} />
           </button>

@@ -4,7 +4,7 @@
 
 **A frictionless, high-end task management interface built with the Apple design aesthetic.**
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.4-black?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.4.3-black?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.3-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
@@ -16,9 +16,9 @@
 
 ## Overview
 
-Sali is a **premium task board application** inspired by the Apple design language — clean, minimal, and purposefully beautiful. The current phase is focused entirely on the frontend UI/UX: animations, micro-interactions, and pixel-perfect design fidelity.
+Sali is a **premium local-first task board application** inspired by the Apple design language — clean, minimal, and purposefully beautiful. Boards and tasks are saved in the browser so the complete frontend workflow survives refreshes without requiring an account.
 
-> **Backend & database integration (Supabase) are planned for a future phase.** All data is currently hardcoded mock data.
+> **Backend and account sync are the next infrastructure phase.** The current build persists data per device with `localStorage`; Supabase can replace this storage boundary later.
 
 ---
 
@@ -28,6 +28,9 @@ Sali is a **premium task board application** inspired by the Apple design langua
 - **Drag & Drop** — Physically satisfying card interactions powered by `@dnd-kit`
 - **Fluid Animations** — Buttery smooth Framer Motion transitions on every state change: hover, drag, drop, and modal open
 - **Task Details Slide-Over** — Beautiful `28px`-radius modal with a blurred `Paper Frost` backdrop
+- **Complete Task Workflow** — Create, edit, duplicate, archive, delete, filter, update subtasks, and undo
+- **Local Persistence** — Each board keeps its own tasks after navigation and refresh
+- **Accessible Interaction** — Keyboard drag-and-drop, trapped dialog focus, reduced motion, and 44px touch targets
 - **Responsive Design** — Mobile-first layout that adapts to any screen size
 - **Custom Design System** — Fully tokenized color palette, typography scale, and spacing system (Tailwind v4)
 
@@ -37,7 +40,7 @@ Sali is a **premium task board application** inspired by the Apple design langua
 
 | Layer | Technology |
 |---|---|
-| **Framework** | Next.js 16.4 (App Router) |
+| **Framework** | Next.js 16.4.3 (App Router) |
 | **Language** | TypeScript 6.0 |
 | **Styling** | Tailwind CSS v4 |
 | **Animations** | Framer Motion 14.1 |
@@ -77,12 +80,14 @@ Sali uses a strict token-based design system derived from the Apple aesthetic:
 | Epic | Feature | Status |
 |---|---|---|
 | **Epic 1** | Project Setup & Design System | ✅ Done |
-| **Epic 2** | Base UI Component Library | 🔄 In Progress |
-| **Epic 3** | Landing Page & Dashboard | ⬜ Planned |
-| **Epic 4** | Static Board Interface | ⬜ Planned |
-| **Epic 5** | Drag & Drop Experience | ⬜ Planned |
-| **Epic 6** | Task Details Slide-Over | ⬜ Planned |
-| **Future** | Backend (Supabase) | ⬜ Planned |
+| **Epic 2** | Base UI Component Library | ✅ Done |
+| **Epic 3** | Landing Page & Dashboard | ✅ Done |
+| **Epic 4** | Board Interface | ✅ Done |
+| **Epic 5** | Drag & Drop Experience | ✅ Done |
+| **Epic 6** | Task Details & Editing | ✅ Done |
+| **Epic 7** | Motion, Accessibility & Responsive Polish | ✅ Done |
+| **Epic 8** | Local Persistence & Release Hardening | ✅ Done |
+| **Next** | Supabase Auth, Sync & Collaboration | ⬜ Planned |
 
 ---
 
@@ -90,7 +95,7 @@ Sali uses a strict token-based design system derived from the Apple aesthetic:
 
 ### Prerequisites
 
-- **Node.js** `>= 18.x`
+- **Node.js** `>= 20.9`
 - **npm** or **yarn** or **pnpm**
 
 ### Installation
@@ -119,6 +124,8 @@ npm run dev      # Start development server (with Turbopack)
 npm run build    # Create production build
 npm run start    # Start production server
 npm run lint     # Run ESLint
+npm run typecheck # Run TypeScript checks
+npm run test     # Run persistence regression tests
 ```
 
 ---
@@ -129,11 +136,18 @@ npm run lint     # Run ESLint
 sali-app/
 ├── frontend/
 │   ├── app/
-│   │   ├── layout.tsx        # Root layout & global providers
-│   │   ├── page.tsx          # Home / landing page
-│   │   └── globals.css       # Design system tokens (Tailwind v4)
+│   │   ├── boards/            # Dashboard and dynamic board routes
+│   │   ├── error.tsx          # Recoverable application error state
+│   │   ├── not-found.tsx      # Missing route state
+│   │   ├── layout.tsx         # Root layout & global experience
+│   │   ├── page.tsx           # Home / landing page
+│   │   └── globals.css        # Design system tokens (Tailwind v4)
 │   ├── components/
-│   │   └── global-navigation.tsx
+│   │   ├── board/             # Board, cards, filters, details and editor
+│   │   ├── dashboard/         # Board dashboard and creation dialog
+│   │   └── ui/                # Shared controls and accessibility hooks
+│   ├── lib/board-store.ts     # Local-first persistence boundary
+│   ├── tests/                 # Regression tests
 │   ├── next.config.ts
 │   ├── tailwind.config.ts
 │   └── package.json

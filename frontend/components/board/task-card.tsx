@@ -38,7 +38,7 @@ export function TaskCard({ overlay = false, task }: TaskCardProps) {
         ) : null}
       </div>
 
-      <h3 className="mt-16 font-sf-pro-text text-body-small font-semibold leading-body-small tracking-body-small text-ink">
+      <h3 className="mt-16 break-words font-sf-pro-text text-body-small font-semibold leading-body-small tracking-body-small text-ink">
         {task.title}
       </h3>
 
