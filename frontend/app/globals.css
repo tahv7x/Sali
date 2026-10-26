@@ -148,3 +148,17 @@ a {
     scroll-behavior: auto;
   }
 }
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-navigation-material] {
+    background: var(--color-paper-frost);
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  [data-navigation-material] {
+    border-color: var(--color-steel);
+    background: var(--color-paper-frost);
+  }
+}

@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 import { PricingBlueButton, RoundedInput, useDialogFocus } from "@/components/ui";
+import { backdrop, scaleIn } from "@/lib/motion";
 
 export function NewBoardModal({
   onClose,
@@ -31,9 +32,10 @@ export function NewBoardModal({
   return (
     <motion.div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-paper-frost/85 p-20 backdrop-blur-[20px]"
-      initial={reduceMotion ? false : { opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={reduceMotion ? undefined : { opacity: 0 }}
+      variants={backdrop}
+      initial={reduceMotion ? false : "hidden"}
+      animate="visible"
+      exit="exit"
       onMouseDown={(event) => {
         if (event.currentTarget === event.target) onClose();
       }}
@@ -44,9 +46,10 @@ export function NewBoardModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-board-title"
-        initial={reduceMotion ? false : { opacity: 0, y: 20, scale: 0.985 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={reduceMotion ? undefined : { opacity: 0, y: 12, scale: 0.99 }}
+        variants={scaleIn}
+        initial={reduceMotion ? false : "hidden"}
+        animate="visible"
+        exit="exit"
         className="w-full max-w-[560px] rounded-[28px] border border-hairline-silver bg-gallery-white p-28"
       >
         <div className="flex items-start justify-between gap-20">
@@ -54,7 +57,7 @@ export function NewBoardModal({
             <p className="font-sf-pro-text text-compact-control font-semibold leading-compact-control tracking-compact-control text-launch-orange">NEW BOARD</p>
             <h2 id="new-board-title" className="mt-8 font-sf-pro-display text-[28px] font-semibold leading-[1.14] tracking-[-0.015em] text-ink">Make room for the next idea.</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close new board dialog" className="grid size-44 shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue">
+          <button type="button" onClick={onClose} aria-label="Close new board dialog" className="grid size-[44px] shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue">
             <X aria-hidden="true" size={16} strokeWidth={1.8} />
           </button>
         </div>

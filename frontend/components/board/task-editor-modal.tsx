@@ -5,10 +5,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 import { PricingBlueButton, RoundedInput, useDialogFocus } from "@/components/ui";
 import { useMediaQuery } from "@/components/ui/use-media-query";
+import { backdrop, scaleIn, transition } from "@/lib/motion";
 import type { BoardColumn, Priority, Task } from "./mock-data";
-
-const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
-const drawerEase: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
 type TaskEditorModalProps = {
   columns: BoardColumn[];
@@ -82,58 +80,32 @@ export function TaskEditorModal({
     );
   };
 
-  const panelInitial = reduceMotion
-    ? { opacity: 0, transform: "none" }
-    : isMobile
-      ? { opacity: 1, transform: "translateY(100%) scale(1) rotate(0deg)" }
-      : { opacity: 0, transform: "translateY(16px) scale(0.97)" };
-  const panelAnimate = reduceMotion
+  const panelVariants = isMobile
     ? {
-        opacity: 1,
-        transform: "none",
-        transition: { duration: 0.16, ease: easeOut },
+        hidden: {
+          opacity: 1,
+          transform: "translate3d(0, 100%, 0)",
+        },
+        visible: {
+          opacity: 1,
+          transform: "translate3d(0, 0, 0)",
+          transition: transition.base,
+        },
+        exit: {
+          opacity: 1,
+          transform: "translate3d(0, 100%, 0)",
+          transition: transition.fast,
+        },
       }
-    : isMobile
-      ? {
-          opacity: 1,
-          transform: "translateY(0%) scale(1) rotate(0deg)",
-          transition: { duration: 0.32, ease: drawerEase },
-        }
-      : {
-          opacity: 1,
-          transform: "translateY(0px) scale(1)",
-          transition: { duration: 0.28, ease: easeOut },
-        };
-  const panelExit = reduceMotion
-    ? {
-        opacity: 0,
-        transform: "none",
-        transition: { duration: 0.12, ease: easeOut },
-      }
-    : isMobile
-      ? {
-          opacity: 1,
-          transform: "translateY(100%) scale(1) rotate(0deg)",
-          transition: { duration: 0.24, ease: drawerEase },
-        }
-      : {
-          opacity: 0,
-          transform: "translateY(12px) scale(0.985)",
-          transition: { duration: 0.2, ease: easeOut },
-        };
+    : scaleIn;
 
   return (
     <motion.div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-paper-frost/85 p-20 backdrop-blur-[20px] max-md:items-end max-md:p-0"
-      initial={{ opacity: 0 }}
-      animate={{
-        opacity: 1,
-        transition: { duration: reduceMotion ? 0.16 : 0.2, ease: easeOut },
-      }}
-      exit={{
-        opacity: 0,
-        transition: { duration: reduceMotion ? 0.12 : 0.16, ease: easeOut },
-      }}
+      variants={backdrop}
+      initial={reduceMotion ? false : "hidden"}
+      animate="visible"
+      exit="exit"
       onMouseDown={(event) => {
         if (event.currentTarget === event.target) onClose();
       }}
@@ -144,9 +116,10 @@ export function TaskEditorModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-editor-title"
-        initial={panelInitial}
-        animate={panelAnimate}
-        exit={panelExit}
+        variants={panelVariants}
+        initial={reduceMotion ? false : "hidden"}
+        animate="visible"
+        exit="exit"
         style={{ transformOrigin: isMobile ? "bottom center" : "center center" }}
         className="max-h-[90vh] w-full max-w-[720px] overflow-y-auto rounded-[28px] border border-hairline-silver bg-gallery-white p-28 max-md:max-h-[94vh] max-md:rounded-b-none"
       >
@@ -166,7 +139,7 @@ export function TaskEditorModal({
             type="button"
             onClick={onClose}
             aria-label="Close task editor"
-            className="grid size-44 shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+            className="grid size-[44px] shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
           >
             <X aria-hidden="true" size={16} strokeWidth={1.8} />
           </button>
@@ -194,7 +167,7 @@ export function TaskEditorModal({
               placeholder="Add the context your team needs"
               rows={4}
               maxLength={2000}
-              className="mt-8 w-full resize-none rounded-[20px] border border-steel bg-gallery-white px-20 py-16 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink outline-none placeholder:text-slate focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+              className="mt-8 w-full resize-none rounded-[20px] border border-steel bg-gallery-white px-20 py-16 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink outline-none placeholder:text-slate focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue max-md:text-[16px]"
             />
           </label>
 
@@ -228,14 +201,14 @@ export function TaskEditorModal({
               placeholder={"Draft the outline\nRequest review\nPublish the final version"}
               rows={4}
               maxLength={1200}
-              className="mt-8 w-full resize-y rounded-[20px] border border-steel bg-gallery-white px-20 py-16 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink outline-none placeholder:text-slate focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+              className="mt-8 w-full resize-y rounded-[20px] border border-steel bg-gallery-white px-20 py-16 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink outline-none placeholder:text-slate focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue max-md:text-[16px]"
             />
             <span className="mt-8 block font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
               Add one subtask per line.
             </span>
           </label>
 
-          <div className="mt-32 flex items-center justify-end gap-12 border-t border-hairline-silver pt-20">
+          <div className="mt-32 flex flex-wrap items-center justify-end gap-12 border-t border-hairline-silver pt-20">
             <button
               type="button"
               onClick={onClose}
@@ -270,7 +243,7 @@ function SelectField({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-8 h-[44px] w-full rounded-[980px] border border-steel bg-gallery-white px-20 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink outline-none focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+        className="mt-8 h-[44px] w-full rounded-[980px] border border-steel bg-gallery-white px-20 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink outline-none focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue max-md:text-[16px]"
       >
         {children}
       </select>

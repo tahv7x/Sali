@@ -5,11 +5,9 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CalendarDays, Check, Copy, Pencil, Tag, Trash2, UserRound, X } from "lucide-react";
 import { useMediaQuery } from "@/components/ui/use-media-query";
 import { useDialogFocus } from "@/components/ui";
+import { backdrop, scaleIn, transition } from "@/lib/motion";
 import type { Priority, Task } from "./mock-data";
 import { AvatarStack } from "./task-card";
-
-const easeOut: [number, number, number, number] = [0.23, 1, 0.32, 1];
-const drawerEase: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
 const priorityStyles: Record<Priority, string> = {
   High: "bg-launch-orange",
@@ -57,60 +55,34 @@ export function TaskDetailsModal({
     });
   };
 
-  const panelInitial = reduceMotion
-    ? { opacity: 0, transform: "none" }
-    : isMobile
-      ? { opacity: 1, transform: "translateY(100%) scale(1) rotate(0deg)" }
-      : { opacity: 0, transform: "translateY(16px) scale(0.97)" };
-  const panelAnimate = reduceMotion
+  const panelVariants = isMobile
     ? {
-        opacity: 1,
-        transform: "none",
-        transition: { duration: 0.16, ease: easeOut },
+        hidden: {
+          opacity: 1,
+          transform: "translate3d(0, 100%, 0)",
+        },
+        visible: {
+          opacity: 1,
+          transform: "translate3d(0, 0, 0)",
+          transition: transition.base,
+        },
+        exit: {
+          opacity: 1,
+          transform: "translate3d(0, 100%, 0)",
+          transition: transition.fast,
+        },
       }
-    : isMobile
-      ? {
-          opacity: 1,
-          transform: "translateY(0%) scale(1) rotate(0deg)",
-          transition: { duration: 0.32, ease: drawerEase },
-        }
-      : {
-          opacity: 1,
-          transform: "translateY(0px) scale(1)",
-          transition: { duration: 0.28, ease: easeOut },
-        };
-  const panelExit = reduceMotion
-    ? {
-        opacity: 0,
-        transform: "none",
-        transition: { duration: 0.12, ease: easeOut },
-      }
-    : isMobile
-      ? {
-          opacity: 1,
-          transform: "translateY(100%) scale(1) rotate(0deg)",
-          transition: { duration: 0.24, ease: drawerEase },
-        }
-      : {
-          opacity: 0,
-          transform: "translateY(12px) scale(0.985)",
-          transition: { duration: 0.2, ease: easeOut },
-        };
+    : scaleIn;
 
   return (
     <AnimatePresence>
       {task ? (
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center bg-paper-frost/85 p-20 backdrop-blur-[20px] max-md:items-end max-md:p-0"
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: 1,
-            transition: { duration: reduceMotion ? 0.16 : 0.2, ease: easeOut },
-          }}
-          exit={{
-            opacity: 0,
-            transition: { duration: reduceMotion ? 0.12 : 0.16, ease: easeOut },
-          }}
+          variants={backdrop}
+          initial={reduceMotion ? false : "hidden"}
+          animate="visible"
+          exit="exit"
           onMouseDown={(event) => {
             if (event.currentTarget === event.target) onClose();
           }}
@@ -121,14 +93,15 @@ export function TaskDetailsModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="task-details-title"
-            initial={panelInitial}
-            animate={panelAnimate}
-            exit={panelExit}
+            variants={panelVariants}
+            initial={reduceMotion ? false : "hidden"}
+            animate="visible"
+            exit="exit"
             style={{ transformOrigin: isMobile ? "bottom center" : "center center" }}
             className="max-h-[88vh] w-full max-w-[760px] overflow-y-auto rounded-[28px] border border-hairline-silver bg-gallery-white p-28 max-md:max-h-[92vh] max-md:rounded-b-none max-md:border-b-0"
           >
             <div className="flex items-start justify-between gap-20">
-              <div>
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-12">
                   <span className="font-sf-pro-text text-compact-control font-medium leading-compact-control tracking-compact-control text-slate">
                     {status}
@@ -140,7 +113,7 @@ export function TaskDetailsModal({
                 </div>
                 <h2
                   id="task-details-title"
-                  className="mt-12 max-w-[580px] font-sf-pro-display text-[28px] font-semibold leading-[1.14] tracking-[-0.015em] text-ink"
+                  className="mt-12 max-w-[580px] break-words font-sf-pro-display text-[28px] font-semibold leading-[1.14] tracking-[-0.015em] text-ink"
                 >
                   {task.title}
                 </h2>
@@ -150,7 +123,7 @@ export function TaskDetailsModal({
                 type="button"
                 aria-label="Close task details"
                 onClick={onClose}
-                className="grid size-44 shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none transition-colors hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+                className="grid size-[44px] shrink-0 place-items-center rounded-full bg-control-gray text-ink outline-none transition-colors hover:bg-hairline-silver focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
               >
                 <X aria-hidden="true" size={16} strokeWidth={1.8} />
               </button>
@@ -162,7 +135,7 @@ export function TaskDetailsModal({
                   <h3 className="font-sf-pro-text text-compact-control font-semibold leading-compact-control tracking-compact-control text-ink">
                     Description
                   </h3>
-                  <p className="mt-12 font-sf-pro-text text-body leading-body tracking-body text-slate">
+                  <p className="mt-12 break-words font-sf-pro-text text-body leading-body tracking-body text-slate">
                     {task.description}
                   </p>
                 </section>
@@ -185,12 +158,12 @@ export function TaskDetailsModal({
                         className="flex w-full items-center gap-12 py-16 text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-apple-blue"
                       >
                         <span
-                          className={`grid size-20 shrink-0 place-items-center rounded-full border ${subtask.done ? "border-ink bg-ink text-gallery-white" : "border-steel bg-gallery-white text-transparent"}`}
+                          className={`grid size-20 shrink-0 place-items-center rounded-full border ${subtask.done ? "border-ink bg-ink text-gallery-white" : "border-steel bg-gallery-white text-ink [&>svg]:opacity-0"}`}
                         >
                           <Check aria-hidden="true" size={12} strokeWidth={2.2} />
                         </span>
                         <span
-                          className={`font-sf-pro-text text-body-small leading-body-small tracking-body-small ${subtask.done ? "text-slate line-through" : "text-ink"}`}
+                          className={`min-w-0 break-words font-sf-pro-text text-body-small leading-body-small tracking-body-small ${subtask.done ? "text-slate line-through" : "text-ink"}`}
                         >
                           {subtask.title}
                         </span>
@@ -255,7 +228,7 @@ function DetailRow({
         <Icon aria-hidden="true" size={13} strokeWidth={1.7} />
         {label}
       </span>
-      <div className="mt-8 font-sf-pro-text text-body-small font-medium leading-body-small tracking-body-small text-ink">
+      <div className="mt-8 break-words font-sf-pro-text text-body-small font-medium leading-body-small tracking-body-small text-ink">
         {children}
       </div>
     </div>

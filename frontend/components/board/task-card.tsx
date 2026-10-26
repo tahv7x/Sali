@@ -6,6 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays, CheckCircle2 } from "lucide-react";
 import type { Priority, Task } from "./mock-data";
+import { cardMotion } from "@/lib/motion";
 
 const priorityStyles: Record<Priority, string> = {
   High: "bg-launch-orange",
@@ -23,7 +24,7 @@ export function TaskCard({ overlay = false, task }: TaskCardProps) {
 
   return (
     <article
-      className={`rounded-[28px] border bg-gallery-white p-20 ${overlay ? "border-steel" : "border-hairline-silver"}`}
+      className={`rounded-[28px] border bg-gallery-white p-20 transition-colors duration-200 ${overlay ? "border-steel" : "border-hairline-silver group-hover:border-steel"}`}
     >
       <div className="flex items-center justify-between gap-12">
         <span className="inline-flex items-center gap-8 font-sf-pro-text text-compact-control font-medium leading-compact-control tracking-compact-control text-slate">
@@ -46,7 +47,7 @@ export function TaskCard({ overlay = false, task }: TaskCardProps) {
         {task.tags.map((tag) => (
           <span
             key={tag}
-            className="border-b border-hairline-silver pb-4 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate"
+            className="max-w-full break-words border-b border-hairline-silver pb-4 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate"
           >
             {tag}
           </span>
@@ -54,7 +55,7 @@ export function TaskCard({ overlay = false, task }: TaskCardProps) {
       </div>
 
       <div className="mt-20 flex items-center justify-between gap-12">
-        <span className="inline-flex items-center gap-4 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
+        <span className="inline-flex min-w-0 items-center gap-4 break-words font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
           <CalendarDays aria-hidden="true" size={13} strokeWidth={1.7} />
           {task.dueDate}
         </span>
@@ -110,21 +111,15 @@ export function SortableTaskCard({ columnId, onOpen, task }: SortableTaskCardPro
         }
         sortableKeyDown?.(event);
       }}
-      className="cursor-grab rounded-[28px] outline-none active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+      className="group cursor-grab rounded-[28px] outline-none active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
     >
       <motion.div
         whileHover={
           isDragging || reduceMotion
             ? undefined
-            : {
-                transform: "translateY(-2px)",
-                transition: {
-                  duration: 0.14,
-                  ease: [0.23, 1, 0.32, 1],
-                },
-              }
+            : cardMotion.whileHover
         }
-        transition={{ duration: 0.14, ease: [0.23, 1, 0.32, 1] }}
+        transition={cardMotion.transition}
       >
         <TaskCard task={task} />
       </motion.div>

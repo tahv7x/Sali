@@ -12,6 +12,7 @@ import {
   initialBoards,
   type BoardSummary,
 } from "@/lib/board-store";
+import { cardMotion, fadeUp, revealViewport, stagger } from "@/lib/motion";
 import { NewBoardModal } from "./new-board-modal";
 
 export function DashboardView() {
@@ -91,66 +92,32 @@ export function DashboardView() {
         />
       </div>
 
-      <div className="mt-40 grid grid-cols-2 gap-20 max-md:grid-cols-1">
-        {filteredBoards.map((board, index) => (
+      <motion.div
+        className="mt-40 grid grid-cols-2 gap-20 max-md:grid-cols-1"
+        variants={stagger}
+        initial={reduceMotion ? false : "hidden"}
+        whileInView="visible"
+        viewport={revealViewport}
+      >
+        {filteredBoards.map((board) => (
           <motion.div
             key={board.id}
-            initial={
-              reduceMotion
-                ? { opacity: 0 }
-                : { opacity: 0, transform: "translateY(14px)" }
-            }
-            animate={
-              reduceMotion
-                ? {
-                    opacity: 1,
-                    transition: {
-                      duration: 0.12,
-                      ease: [0.23, 1, 0.32, 1],
-                    },
-                  }
-                : {
-                    opacity: 1,
-                    transform: "translateY(0px)",
-                    transition: {
-                      duration: 0.22,
-                      delay: index * 0.05,
-                      ease: [0.23, 1, 0.32, 1],
-                    },
-                  }
-            }
+            variants={fadeUp}
           >
             <motion.div
-              animate={
-                reduceMotion
-                  ? undefined
-                  : { transform: "translateY(0px)" }
-              }
-              whileHover={
-                reduceMotion
-                  ? undefined
-                  : { transform: "translateY(-2px)" }
-              }
-              transition={
-                reduceMotion
-                  ? undefined
-                  : {
-                      duration: 0.14,
-                      delay: 0,
-                      ease: [0.25, 0.1, 0.25, 1],
-                    }
-              }
+              whileHover={reduceMotion ? undefined : cardMotion.whileHover}
+              transition={cardMotion.transition}
             >
               <Link
                 href={`/boards/${board.id}`}
-                className="group flex min-h-[270px] flex-col rounded-[28px] bg-gallery-white p-28 outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-apple-blue"
+                className="group flex min-h-[270px] flex-col rounded-[28px] border border-transparent bg-gallery-white p-28 outline-none transition-colors duration-200 hover:border-steel focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-apple-blue"
               >
                 <div className="flex items-start justify-between gap-20">
-                  <div>
-                    <h2 className="font-sf-pro-display text-[28px] font-semibold leading-[1.14] tracking-[-0.015em] text-ink">
+                  <div className="min-w-0">
+                    <h2 className="break-words font-sf-pro-display text-[28px] font-semibold leading-[1.14] tracking-[-0.015em] text-ink">
                       {board.title}
                     </h2>
-                    <p className="mt-12 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-slate">
+                    <p className="mt-12 break-words font-sf-pro-text text-body-small leading-body-small tracking-body-small text-slate">
                       {board.description}
                     </p>
                   </div>
@@ -167,10 +134,17 @@ export function DashboardView() {
                     <span>{board.progress}% complete</span>
                     <span>{board.tasks} tasks</span>
                   </div>
-                  <div className="mt-8 h-4 overflow-hidden rounded-full bg-control-gray">
+                  <div
+                    role="progressbar"
+                    aria-label={`${board.title} completion`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={board.progress}
+                    className="mt-8 h-4 overflow-hidden rounded-full bg-control-gray"
+                  >
                     <div
                       className="h-full rounded-full bg-ink"
-                      style={{ width: `${board.progress}%` }}
+                      style={{ width: `${Math.min(100, Math.max(0, board.progress))}%` }}
                     />
                   </div>
                   <div className="mt-20 flex items-center gap-20 font-sf-pro-text text-compact-control leading-compact-control tracking-compact-control text-slate">
@@ -188,7 +162,7 @@ export function DashboardView() {
             </motion.div>
           </motion.div>
         ))}
-      </div>
+      </motion.div>
 
       {filteredBoards.length === 0 ? (
         <div className="mt-40 rounded-[28px] bg-gallery-white p-40 text-center">

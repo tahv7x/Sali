@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Check, Search, X } from "lucide-react";
 import type { Assignee, Priority } from "./mock-data";
+import { scaleIn } from "@/lib/motion";
 
 type BoardFiltersProps = {
   assignees: Assignee[];
@@ -19,8 +20,6 @@ type BoardFiltersProps = {
 };
 
 const priorities: Priority[] = ["High", "Medium", "Low"];
-const appleEase = [0.22, 1, 0.36, 1] as const;
-
 export function BoardFilters({
   assignees,
   onClear,
@@ -45,10 +44,11 @@ export function BoardFilters({
       role="dialog"
       aria-label="Board filters"
       className="fixed left-12 right-12 top-[92px] z-40 rounded-[28px] border border-hairline-silver bg-gallery-white p-24 md:absolute md:left-auto md:right-0 md:top-[calc(100%+8px)] md:w-[380px]"
-      initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.985 }}
-      transition={{ duration: reduceMotion ? 0.12 : 0.28, ease: appleEase }}
+      variants={scaleIn}
+      initial={reduceMotion ? false : "hidden"}
+      animate="visible"
+      exit="exit"
+      style={{ transformOrigin: "top right" }}
     >
       <div className="flex items-start justify-between gap-20">
         <div>
@@ -63,7 +63,7 @@ export function BoardFilters({
           type="button"
           aria-label="Close filters"
           onClick={onClose}
-          className="grid size-44 shrink-0 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-paper-frost hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+          className="grid size-[44px] shrink-0 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-paper-frost hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
         >
           <X aria-hidden="true" size={15} strokeWidth={1.8} />
         </button>
@@ -83,7 +83,7 @@ export function BoardFilters({
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
           placeholder="Search title, tag, or person"
-          className="h-[44px] w-full rounded-[980px] border border-steel bg-gallery-white py-12 pl-44 pr-20 font-arial text-[13px] leading-[1.2] text-ink outline-none transition-colors placeholder:text-slate focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+          className="h-[44px] w-full rounded-[980px] border border-steel bg-gallery-white py-12 pl-44 pr-20 font-arial text-[13px] leading-[1.2] text-ink outline-none transition-colors placeholder:text-slate focus-visible:border-apple-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue max-md:text-[16px]"
         />
       </label>
 

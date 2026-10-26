@@ -39,6 +39,7 @@ import {
   saveStoredTasks,
   type TaskMap,
 } from "@/lib/board-store";
+import { spring, transition } from "@/lib/motion";
 
 type EditorState = {
   columnId: string;
@@ -411,12 +412,12 @@ export function TaskBoard({ boardId, boardTitle }: { boardId: string; boardTitle
 
   return (
     <section className="min-h-[calc(100vh-44px)] bg-studio-mist pb-28">
-      <div className="sticky top-0 z-30 px-20 pt-20 max-md:px-12 max-md:pt-12">
+      <div className="sticky top-[76px] z-30 px-20 pt-20 max-md:px-12 max-md:pt-12">
         <div className="mx-auto flex min-h-[64px] max-w-[1600px] items-center justify-between gap-20 rounded-[20px] border border-hairline-silver bg-gallery-white px-20 py-12 max-md:items-start max-md:flex-col">
-          <div className="flex items-center gap-16">
-            <div>
+          <div className="min-w-0 flex items-center gap-16">
+            <div className="min-w-0">
               <LaunchLabel>ACTIVE BOARD</LaunchLabel>
-              <h1 className="mt-4 font-sf-pro-display text-product-nav-title font-semibold leading-product-nav-title tracking-product-nav-title text-ink">
+              <h1 className="mt-4 break-words font-sf-pro-display text-product-nav-title font-semibold leading-product-nav-title tracking-product-nav-title text-ink">
                 {boardTitle}
               </h1>
             </div>
@@ -432,7 +433,7 @@ export function TaskBoard({ boardId, boardTitle }: { boardId: string; boardTitle
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-8">
+          <div className="flex w-full flex-wrap items-center gap-8 sm:w-auto">
             <div ref={filterMenuRef} className="relative">
               <ExplorePill
                 aria-expanded={isFiltersOpen}
@@ -475,7 +476,7 @@ export function TaskBoard({ boardId, boardTitle }: { boardId: string; boardTitle
               )}
               {shareStatus === "copied" ? "Link copied" : "Share"}
             </ExplorePill>
-            <PricingBlueButton onClick={() => openCreateTask()}>
+            <PricingBlueButton className="max-sm:w-full" onClick={() => openCreateTask()}>
               <Plus aria-hidden="true" size={14} strokeWidth={2} />
               Add task
             </PricingBlueButton>
@@ -556,11 +557,7 @@ export function TaskBoard({ boardId, boardTitle }: { boardId: string; boardTitle
                           "translate3d(0, 0, 0) scale(1.02) rotate(0.6deg)",
                       }
                 }
-                transition={
-                  reduceMotion
-                    ? { duration: 0.12, ease: [0.23, 1, 0.32, 1] }
-                    : { type: "spring", duration: 0.5, bounce: 0.2 }
-                }
+                transition={reduceMotion ? transition.fast : spring.drop}
                 className="w-[300px] cursor-grabbing"
               >
                 <TaskCard task={activeTask} overlay />
@@ -643,7 +640,7 @@ function BoardColumnView({
           type="button"
           aria-label={`Add task to ${column.title}`}
           onClick={() => onAddTask(column.id)}
-          className="grid size-44 place-items-center rounded-full text-slate outline-none transition-colors hover:bg-gallery-white hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+          className="grid size-[44px] place-items-center rounded-full text-slate outline-none transition-colors hover:bg-gallery-white hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
         >
           <Plus aria-hidden="true" size={15} strokeWidth={1.8} />
         </button>

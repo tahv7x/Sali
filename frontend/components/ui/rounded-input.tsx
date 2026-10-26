@@ -19,8 +19,8 @@ type RoundedInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
 };
 
 const inputKindStyles: Record<InputKind, string> = {
-  text: "font-sf-pro-text text-body-small leading-body-small tracking-body-small",
-  search: "font-arial text-[13px] leading-[1.2] tracking-normal",
+  text: "font-sf-pro-text text-body-small leading-body-small tracking-body-small max-md:text-[16px]",
+  search: "font-arial text-[13px] leading-[1.2] tracking-normal max-md:text-[16px]",
 };
 
 export const RoundedInput = forwardRef<HTMLInputElement, RoundedInputProps>(

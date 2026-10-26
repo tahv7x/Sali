@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion, type HTMLMotionProps } from "framer-motion";
+import { buttonMotion } from "@/lib/motion";
 
 type PillButtonVariant = "pricing" | "outline";
 
@@ -30,10 +31,9 @@ export function PillButton({
       disabled={disabled}
       data-slot="pill-button"
       data-variant={variant}
-      whileHover={disabled || reduceMotion ? undefined : { y: -1 }}
-      whileTap={disabled || reduceMotion ? undefined : { scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 500, damping: 32, mass: 0.5 }}
-      className={`inline-flex min-h-[44px] items-center justify-center gap-8 rounded-[9999px] px-16 py-8 font-sf-pro-text text-compact-control font-normal leading-compact-control tracking-compact-control outline-none transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue disabled:cursor-not-allowed ${variantStyles[variant]} ${className}`}
+      whileTap={disabled || reduceMotion ? undefined : buttonMotion.whileTap}
+      transition={buttonMotion.transition}
+      className={`inline-flex min-h-[44px] items-center justify-center gap-8 rounded-[9999px] px-20 py-8 font-sf-pro-text text-compact-control font-medium leading-compact-control tracking-compact-control outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue disabled:cursor-not-allowed disabled:opacity-60 ${variantStyles[variant]} ${className}`}
       {...props}
     />
   );

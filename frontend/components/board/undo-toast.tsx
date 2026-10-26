@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
+import { transition } from "@/lib/motion";
 
 export type UndoNotice = {
   id: number;
@@ -25,9 +26,28 @@ export function UndoToast({
         <motion.div
           key={notice.id}
           role="status"
-          initial={reduceMotion ? false : { opacity: 0, y: 16, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={reduceMotion ? undefined : { opacity: 0, y: 10, scale: 0.99 }}
+          initial={
+            reduceMotion
+              ? false
+              : {
+                  opacity: 0,
+                  transform: "translate3d(0, 16px, 0) scale(0.98)",
+                }
+          }
+          animate={{
+            opacity: 1,
+            transform: "translate3d(0, 0, 0) scale(1)",
+            transition: transition.base,
+          }}
+          exit={
+            reduceMotion
+              ? undefined
+              : {
+                  opacity: 0,
+                  transform: "translate3d(0, 10px, 0) scale(0.99)",
+                  transition: transition.fast,
+                }
+          }
           className="fixed bottom-20 left-1/2 z-[80] flex w-[min(420px,calc(100%-32px))] -translate-x-1/2 items-center gap-16 rounded-[20px] border border-hairline-silver bg-gallery-white px-20 py-16"
         >
           <p className="min-w-0 flex-1 font-sf-pro-text text-body-small leading-body-small tracking-body-small text-ink">
@@ -44,7 +64,7 @@ export function UndoToast({
             type="button"
             onClick={onDismiss}
             aria-label="Dismiss notification"
-            className="grid size-44 place-items-center rounded-full text-slate outline-none hover:bg-paper-frost hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
+            className="grid size-[44px] shrink-0 place-items-center rounded-full text-slate outline-none hover:bg-paper-frost hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-apple-blue"
           >
             <X aria-hidden="true" size={13} strokeWidth={1.8} />
           </button>
